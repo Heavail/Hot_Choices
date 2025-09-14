@@ -33,7 +33,7 @@ class Player:
     def __init__(self,image,pos = [0,0],size = None):
         self._pos = pos
         self.pos = pos
-        self.prev_pos = pos
+        self.pos_diff = pos
         self.image = image
         self.sprite = pm.image.load(f'{self.image}').convert_alpha()
         self.life_count = None
@@ -60,15 +60,15 @@ class Player:
     def show(self):
         SCREEN.blit(self.sprite,self.pos)
         if self.life_count:
-            for i in self.life_objects:
-                SCREEN.blit(i['image'],i['position'])
+            for i in range(self.life_count):
+                SCREEN.blit(self.life_objects[i]['image'],self.life_objects[i]['position'])
     @property
     def pos(self):
         return self._pos
     @pos.setter
     def pos(self,value):
         if self._pos != value:
-            self.prev_pos = self._pos
+            self.pos_diff = [-self._pos[0] + value[0],-self.pos[1] + value[1]]
             self._pos = value
 def rocks(folder,rock_matrix,starting_pos,size,bias = [0,0]):
     images = os.listdir(folder)
@@ -117,14 +117,22 @@ async def main():
     end_rock = Rock('Assets/rocks/l4.png',True,[screenwidth/2 - rock_size[0]/2,intro_pos[1] + intro_image.get_height() - 25],rock_size)
     all_rocks = rocks('Assets/rocks',[rock_rows - 2,3],[screenwidth/2 - rock_size[0] - rock_size[0]/2,end_rock.pos[1] + end_rock.size[1]],rock_size)
     start_rock.pos[1] = all_rocks[-1][-1].pos[1] + all_rocks[-1][-1].size[1] + all_rocks[-1][-1].bias[1]
-    player = Player('Assets/player.png',(0,0))
+    player = Player('Assets/player.png',(0,0),(start_rock.size[0] - 50,start_rock.size[1] - 30))
     player.pos = [start_rock.pos[0] + start_rock.size[0]/2 - player.size[0]/2,start_rock.pos[1] + start_rock.size[1]/2 - player.size[1]/2]
-    player.life_display(3,'Assets/Heart.png')
+    player.life_display(3,'Assets/Heart.png',gap = [10,0])
+    congrats = pm.image.load('Assets/Congratulations.png').convert_alpha()
+    show_win = False
     scroll = 0
     clicked = False
     current_rock_row = 4
     show_player = True
     while True:
+        if (player.life_count != None and player.life_count == 0) or show_win and clicked:
+            all_rocks = rocks('Assets/rocks',[rock_rows - 2,3],[screenwidth/2 - rock_size[0] - rock_size[0]/2,end_rock.pos[1] + end_rock.size[1]],rock_size)
+            player.pos = [start_rock.pos[0] + start_rock.size[0]/2 - player.size[0]/2,start_rock.pos[1] + start_rock.size[1]/2 - player.size[1]/2]
+            player.life_count = 3
+            current_rock_row = 4
+            show_win = False
         intro_pos = (intro_pos[0],intro_pos[1] + scroll)
         pos = (pos[0],pos[1] + scroll)
         SCREEN.fill((0,0,0))
@@ -135,7 +143,8 @@ async def main():
         mouse_pos = pm.mouse.get_pos()
         if current_rock_row == -1:
             end_rock.selected(mouse_pos,player = player,clicked=clicked)
-            print('Yrue')
+            if end_rock.broken == False:
+                show_win = True
         for index,rows in enumerate(all_rocks):
             for rock in rows:
                 rock.pos[1] += scroll
@@ -169,7 +178,7 @@ async def main():
                         scroll = -intro_pos[1]
                     else:
                         scroll = 50
-                else:
+                elif event.y == -1:
                     if pos[1] <= 0:
                         scroll = -pos[1]
                     else:
@@ -180,12 +189,18 @@ async def main():
             player.frame_count = 0
             player.show()
         else:
-            animate(player,30,'Assets/burning')
+            animate(player,25,'Assets/burning')
             clicked = False
             if player.frame_count == -1:
+                player.life_count -= 1
                 player.animation_loop = 0
                 show_player = True
-                player.pos = player.prev_pos
+                player.pos[0] -= player.pos_diff[0]
+                player.pos[1] -= player.pos_diff[1]
+        if show_win:
+            SCREEN.blit(congrats,(screenwidth/2 - congrats.get_width()/2,screenheight/2 - congrats.get_height()/2))
+        if intro_pos[1] > 0 :
+            scroll = -intro_pos[1]
         CLOCK.tick(60)
         pm.display.update()
         await asyncio.sleep(0)
