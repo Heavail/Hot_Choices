@@ -43,17 +43,17 @@ class Player:
             self.size = size
         self.sprite = pm.transform.scale(self.sprite,self.size)
         pass
-    def life_display(life_count,life_image,life_initial_pos= [0,0],life_size = None,gap = [0,0]):
+    def life_display(self,life_count,life_image,life_initial_pos= [0,0],life_size = None,gap = [0,0]):
         self.life_count = life_count
         self.life_image = life_image
         self.life_initial_pos = life_initial_pos
         self.life_size = life_size
         self.life_objects = []
         for i in range(self.life_count):
-            position = [i * (self.life_initial_pos[0] + gap[0]),i * (self.life_initial_pos[1] + gap[1])]
             image = pm.image.load(self.life_image).convert_alpha()
             if not self.life_size:
                 self.life_size = image.get_size()
+            position = [i * (self.life_initial_pos[0] + gap[0] + self.life_size[0]),i * (self.life_initial_pos[1] + gap[1])]
             image = pm.transform.scale(image,(self.life_size))
             life_object = {'image' : image,'position' : position}
             self.life_objects.append(life_object)
