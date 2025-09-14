@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en-us">
+<script src="https://pygame-web.github.io/archives/0.9/pythons.js"
+        type=module id=site data-LINES=57 data-CONSOLE=25 data-python=python3.12
+        data-os=vtx,fs,snd,gui async defer>#<!--
+
+print("""
+Loading hot_choices from hot_choices.apk
+    Pygbag Version : 0.9.2
+    Template Version : 0.9.0
+    Python  : 3.12
+    CDN URL : https://pygame-web.github.io/archives/0.9/
+    Screen  : 1280x720
+    Title   : hot_choices
+    Folder  : hot_choices
+    Authors : pgw
+    SPDX-License-Identifier: cookiecutter.spdx
+
+""")
+
+# screen pixels (real, hardware)
+WIDTH=1024
+HEIGHT=600
+
+# reference/idealized screen pixels
+REFX = 1980
+REFY = 1080
+
+def u(real, ref, v):
+    if abs(v)<0.9999999:
+        result = int((float(real)/100.0) * (v*1000))
+        if v<0:
+            return real-result
+        return result
+    return int((real/ref) * v)
+
+def ux(*argv):
+    global WIDTH, REFX
+    return sum(u(WIDTH, REFX, v) for v in argv)
+
+def uy(*argv):
+    global HEIGHT, REFY
+    return sum(u(HEIGHT, REFY, v) for v in argv)
+
+
+# do not rename
+async def custom_site():
+    import sys, asyncio, platform, json
+    from pathlib import Path
+    import embed, pygame
+
+    platform.document.body.style.background = "#7f7f7f"
+
+    def compose():
+        pygame.display.update()
+        window.chromakey(None, *screen.get_colorkey(), 40)
+
+    pygame.init()
+    pygame.font.init()
+
+    screen = pygame.display.set_mode([ux(.100), uy(.100)], pygame.SRCALPHA, 32)
+    screen.set_colorkey((0,0,0,0), pygame.RLEACCEL)
+    screen.fill((0,0,0,0))
+    compose()
+
+    platform.window.transfer.hidden = true
+    platform.window.canvas.style.visibility = "visible"
+
+    apk = "hot_choices.apk"
+    bundle = "hot_choices"
+    appdir = Path(f"/data/data/{bundle}")
+    appdir.mkdir()
+
+    cfg = {
+        "io": "url",
+        "type":"mount",
+        "mount" : { "point" : appdir.as_posix(), "path" : "/" },
+        "path" : f"/ => {appdir.as_posix()}",
+    }
+    track = platform.window.MM.prepare(apk, json.dumps(cfg))
+
+    marginx = ux(.020)
+    marginy = uy(.045)
+
+    def pg_bar(pos):
+        total = track.len or 10
+        slot = ux(.060)/total
+        pygame.draw.rect(screen,(10,10,10),(marginx-ux(10), marginy-uy(10),
+                                            (total*slot)+ux(20), uy(110)))
+        pygame.draw.rect(screen,(0,255,0),(marginx, marginy, track.pos*slot, uy(90)))
+
+    while not track.ready:
+        pg_bar(track.pos)
+        compose()
+        await asyncio.sleep(.1)
+
+    pg_bar(track.len)
+    compose()
+
+    platform.run_main(PyConfig, loaderhome=appdir / "assets", loadermain=None)
+
+    while embed.counter()<0:
+        await asyncio.sleep(.1)
+
+    main = appdir / "assets" / "main.py"
+    await TopLevel_async_handler.start_toplevel(platform.shell, console=window.python.config.debug)
+
+    __import__(__name__).__file__ = str(main)
+
+    fnt = pygame.sysfont.SysFont("freesans", uy(80))
+
+    def ui_callback(pkg, error=None):
+        nonlocal fnt
+        if error:
+            prompt = fnt.render(f"{error}", True, "black")
+        else:
+            prompt = fnt.render(f"Setting [{pkg}] up", True, "black")
+        pg_bar(track.len)
+        screen.blit(prompt, (marginx+ ux(80), marginy - uy(10)))
+        compose()
+
+    if not platform.window.MM.UME:
+        fnt = pygame.sysfont.SysFont("freesans", uy(80))
+        prompt = fnt.render("Ready to start !", True, "blue")
+        pg_bar(track.len)
+        screen.blit(prompt, (marginx+ ux(80), marginy - uy(10)))
+        compose()
+        print("""
+        * Waiting for media user engagement : please click/touch page *
+    """)
+        while not platform.window.MM.UME:
+            await asyncio.sleep(.1)
+
+    screen.fill((0,0,0,0))
+    pygame.display.flip()
+
+    await shell.runpy(main, callback=ui_callback)
+
+
+import asyncio
+asyncio.run(custom_site())
+
+# =============================================================================
+# END of Python section
+# =============================================================================
+# --></script><head><!--
+
+--><script type="application/javascript">
+config = {
+    xtermjs : "1",
+    _sdl2 : "canvas",
+    user_canvas : 0,
+    user_canvas_managed : 0,
+    ume_block : 1,
+    can_close : 0,
+    archive : "hot_choices",
+    gui_debug : 3,
+    cdn : "https://pygame-web.github.io/archives/0.9/",
+    autorun : 0,
+    PYBUILD : "3.12"
+}
+</script>
+
+<title>hot_choices</title>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+
+<link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
+
+<style>
+html, body {
+    margin: 0; padding: 0;
+    height: 100%; width: 100%;
+    overflow: hidden;
+    background: black;
+}
+:root { --vh: 1vh; }
+canvas.emscripten {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: calc(var(--vh, 1vh) * 100) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    z-index: 9999 !important;
+    background: black !important;
+}
+#transfer, #html, #crt, #dlg, #pyconsole, #box { display: none !important; }
+iframe { display: none !important; }
+</style>
+
+<script>
+function setVh(){
+    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+}
+window.addEventListener('resize', setVh);
+window.addEventListener('orientationchange', setVh);
+setVh();
+
+// === NEW: hijack F11 for canvas fullscreen ===
+document.addEventListener("keydown", (e) => {
+    if (e.key === "F11") {
+        e.preventDefault();
+        let canvas = document.getElementById("canvas");
+        if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+        } else if (canvas.webkitRequestFullscreen) {
+            canvas.webkitRequestFullscreen();
+        } else if (canvas.msRequestFullscreen) {
+            canvas.msRequestFullscreen();
+        }
+    }
+});
+</script>
+</head>
+
+<body>
+    <div id="transfer" align=center>
+        <div class="emscripten" id="status">Downloading...</div>
+        <div class="emscripten"><progress value="0" max="100" id="progress"></progress></div>
+    </div>
+
+    <canvas class="emscripten" id="canvas"
+            oncontextmenu="event.preventDefault()" tabindex=1></canvas>
+
+    <div id="html"></div>
+    <div id="crt" class="bottomright"></div>
+    <div id="dlg" hidden>
+        <input type="file" id="dlg_multifile" multiple accept="image/*">
+        <label for="dlg_multifile">Select files</label>
+    </div>
+    <div id="pyconsole"><div id="terminal" tabIndex=1 align="left"></div></div>
+</body>
+</html>
