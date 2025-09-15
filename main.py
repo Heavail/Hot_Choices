@@ -5,12 +5,18 @@ import random
 import os
 
 pm.init()
+pm.mixer.init()
+ROCK_BREAKING_SOUND = pm.mixer.Sound('Assets/rock_explosion.ogg')
 screen_info = pm.display.Info()
 screenwidth,screenheight = (screen_info.current_w,screen_info.current_h)
 SCREEN = pm.display.set_mode((screenwidth,screenheight))
+ICON = pm.image.load('Assets/icon.png').convert_alpha()
+pm.display.set_caption('Hot_Choices')
+pm.display.set_icon(ICON)
 CLOCK = pm.time.Clock()
 background_image = pm.transform.scale(pm.image.load('Assets/lava_floor.png').convert_alpha(),(screenwidth,screenheight))
 intro_image = pm.transform.scale(pm.image.load('Assets/bumpy_land.png').convert_alpha(),(screenwidth,screenheight))
+
 class Rock:
     def __init__(self,image,safe,pos,size):
         self.image = image
@@ -119,7 +125,8 @@ async def main():
     start_rock.pos[1] = all_rocks[-1][-1].pos[1] + all_rocks[-1][-1].size[1] + all_rocks[-1][-1].bias[1]
     player = Player('Assets/player.png',(0,0),(start_rock.size[0] - 50,start_rock.size[1] - 30))
     player.pos = [start_rock.pos[0] + start_rock.size[0]/2 - player.size[0]/2,start_rock.pos[1] + start_rock.size[1]/2 - player.size[1]/2]
-    player.life_display(3,'Assets/Heart.png',gap = [10,0])
+    total_lives = 4
+    player.life_display(total_lives,'Assets/Heart.png',gap = [10,0])
     congrats = pm.image.load('Assets/Congratulations.png').convert_alpha()
     show_win = False
     scroll = 0
@@ -130,9 +137,10 @@ async def main():
         if (player.life_count != None and player.life_count == 0) or show_win and clicked:
             all_rocks = rocks('Assets/rocks',[rock_rows - 2,3],[screenwidth/2 - rock_size[0] - rock_size[0]/2,end_rock.pos[1] + end_rock.size[1]],rock_size)
             player.pos = [start_rock.pos[0] + start_rock.size[0]/2 - player.size[0]/2,start_rock.pos[1] + start_rock.size[1]/2 - player.size[1]/2]
-            player.life_count = 3
+            player.life_count = total_lives
             current_rock_row = 4
             show_win = False
+            end_rock.broken = None
         intro_pos = (intro_pos[0],intro_pos[1] + scroll)
         pos = (pos[0],pos[1] + scroll)
         SCREEN.fill((0,0,0))
@@ -154,6 +162,8 @@ async def main():
                     if rock.frame_count != -1:
                         show_player = False
                         animate(rock,5,'Assets/rock_break')
+                        if rock.rate == 0 and rock.frame_count == 1:
+                            ROCK_BREAKING_SOUND.play()
                     else:
                         all_rocks[index].remove(rock)
                 else:
@@ -183,6 +193,18 @@ async def main():
                         scroll = -pos[1]
                     else:
                         scroll = -50
+            elif event.type == FINGERMOTION:
+                clicked = False
+                if event.dy > 0:
+                    if intro_pos[1] >= 0:
+                        scroll = -intro_pos[1]
+                    else:
+                        scroll = 50
+                elif event.dy < 0:
+                    if pos[1] <= 0:
+                        scroll = -pos[1]
+                    else:
+                        scroll = -50
             elif event.type == MOUSEBUTTONDOWN:
                 clicked = True
         if show_player:
@@ -197,6 +219,7 @@ async def main():
                 show_player = True
                 player.pos[0] -= player.pos_diff[0]
                 player.pos[1] -= player.pos_diff[1]
+                ROCK_BREAKING_SOUND.stop()
         if show_win:
             SCREEN.blit(congrats,(screenwidth/2 - congrats.get_width()/2,screenheight/2 - congrats.get_height()/2))
         if intro_pos[1] > 0 :
